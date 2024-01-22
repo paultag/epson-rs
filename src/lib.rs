@@ -72,6 +72,9 @@ pub enum Command {
 
     /// Reverse-feed the specified number of lines.
     ReverseFeed(u8),
+
+    /// Print a greyscale image
+    Image(image::GrayImage),
 }
 
 impl Command {
