@@ -23,26 +23,59 @@
 //! This crate implements support for communicating with the Epson brand of
 //! thermal POS printer.
 
+/// Horizontal alignment.
 #[repr(u8)]
 enum Alignment {
+    /// Align to the leftmost edge.
     Left = 0,
+
+    /// Align to the rightmost edge.
     Right = 2,
+
+    /// Center the text within the printable region.
     Center = 1,
 }
 
+/// All commands that can be encoded to control an Epson printer.
 enum Command {
+    /// Initiaize the printer.
     Init,
 
+    /// If true, underline the printed text following. If false, remove
+    /// text decoration.
     Underline(bool),
+
+    /// If true, emphasize the printed text following. If false, remove
+    /// text decoration.
     Emphasize(bool),
+
+    /// If true, double strike the printed text following. If false, remove
+    /// text decoration.
     DoubleStrike(bool),
+
+    /// If true, invert the color of the the printed text following. If false,
+    /// remove text decoration.
     Reverse(bool),
+
+    /// Align the text to follow accoridng to the specified horizontal
+    /// text alignment.
     Justification(Alignment),
 
-    // BarcodeHeight(u8),
-    // Barcode(Vec<u8>),
-    // Image(...)
-    Raw(Vec<u8>),
+    /// Set the print speed.
+    Speed(u8),
+
+    /// Cut the thermal printer.
+    Cut,
+
+    /// Feed the specified number of lines.
+    Feed(u8),
+
+    /// Reverse-feed the specified number of lines.
+    ReverseFeed(u8),
 }
+
+// BarcodeHeight(u8),
+// Barcode(Vec<u8>),
+// Image(...)
 
 // vim: foldmethod=marker
