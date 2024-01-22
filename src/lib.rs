@@ -25,7 +25,7 @@
 
 /// Horizontal alignment.
 #[repr(u8)]
-enum Alignment {
+pub enum Alignment {
     /// Align to the leftmost edge.
     Left = 0,
 
@@ -37,7 +37,7 @@ enum Alignment {
 }
 
 /// All commands that can be encoded to control an Epson printer.
-enum Command {
+pub enum Command {
     /// Initiaize the printer.
     Init,
 
@@ -74,8 +74,28 @@ enum Command {
     ReverseFeed(u8),
 }
 
+impl Command {
+    /// Return the command as raw bytes which can be sent to a POS printer.
+    pub fn as_bytes(&self) -> Vec<u8> {
+        match self {
+            Command::Init => vec![0x1b, 0x40],
+            _ => vec![],
+        }
+    }
+}
+
 // BarcodeHeight(u8),
 // Barcode(Vec<u8>),
 // Image(...)
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn init() {
+        assert_eq!(&[0x1b, 0x40], &Command::Init.as_bytes()[..]);
+    }
+}
 
 // vim: foldmethod=marker
