@@ -2,6 +2,9 @@
 name = "epson-rs"
 version = "0.1.0"
 edition = "2021"
+authors = ["Paul Tagliamonte <paultag@gmail.com>"]
+repository = "https://github.com/paultag/epson-rs"
+description = "support for communicating with Epson brand thermal POS printers"
 
 [dependencies]
 image = "0"
