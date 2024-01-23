@@ -18,11 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE. }}}
 
-use super::{Alignment, Command, Model};
+use super::{Alignment, Command, Error as EpsonError, Model};
 use std::io::Write;
 
+/// Errors that can be returned from the sync code in the Epson module.
+#[derive(Debug)]
+pub enum Error {
+    /// Raw Epson error
+    Epson(EpsonError),
+
+    /// Underlying Tokio i/o issue.
+    Io(std::io::Error),
+}
+
+impl From<EpsonError> for Error {
+    fn from(ee: EpsonError) -> Error {
+        Error::Epson(ee)
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(se: std::io::Error) -> Error {
+        Error::Io(se)
+    }
+}
+
+impl std::error::Error for Error {}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        write!(f, "{:?}", self)
+    }
+}
+
 ///
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+type Result<T> = std::result::Result<T, Error>;
 
 ///
 pub struct Writer {
