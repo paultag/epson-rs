@@ -54,16 +54,19 @@ impl std::fmt::Display for Error {
 ///
 type Result<T> = std::result::Result<T, Error>;
 
+///
+type Write = dyn AsyncWrite + Unpin + Send;
+
 /// AsyncWriter is a tokio compatable AsyncWrite traited writer that can
 /// write to an Epson printer using a tokio connection such as a TcpStream.
 pub struct AsyncWriter {
-    w: Box<dyn AsyncWrite + Unpin>,
+    w: Box<Write>,
     model: Model,
 }
 
 impl AsyncWriter {
     /// Create a new Writer
-    pub async fn open(model: Model, w: Box<dyn AsyncWrite + Unpin>) -> Result<Self> {
+    pub async fn open(model: Model, w: Box<Write>) -> Result<Self> {
         let mut r = Self { w, model };
         r.init().await?;
         Ok(r)
