@@ -18,11 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE. }}}
 
-use super::{Alignment, Command, Model};
+use super::{Alignment, Command, Error as EpsonError, Model};
 use tokio::io::{AsyncWrite, AsyncWriteExt};
 
+/// Errors that can be returned from the async code in the Epson module.
+#[derive(Debug)]
+pub enum Error {
+    /// Raw Epson error
+    Epson(EpsonError),
+
+    /// Underlying Tokio i/o issue.
+    Tokio(tokio::io::Error),
+}
+
+impl From<EpsonError> for Error {
+    fn from(ee: EpsonError) -> Error {
+        Error::Epson(ee)
+    }
+}
+
+impl From<tokio::io::Error> for Error {
+    fn from(te: tokio::io::Error) -> Error {
+        Error::Tokio(te)
+    }
+}
+
+impl std::error::Error for Error {}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        write!(f, "{:?}", self)
+    }
+}
+
 ///
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+type Result<T> = std::result::Result<T, Error>;
 
 /// AsyncWriter is a tokio compatable AsyncWrite traited writer that can
 /// write to an Epson printer using a tokio connection such as a TcpStream.

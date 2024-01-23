@@ -19,6 +19,7 @@
 // THE SOFTWARE. }}}
 
 #![deny(missing_docs)]
+#![feature(trait_alias)]
 
 //! This crate implements support for communicating with the Epson brand of
 //! thermal POS printer.
