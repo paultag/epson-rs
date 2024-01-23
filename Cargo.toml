@@ -2,6 +2,7 @@
 name = "epson"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
 authors = ["Paul Tagliamonte <paultag@gmail.com>"]
 repository = "https://github.com/paultag/epson-rs"
 description = "support for communicating with Epson brand thermal POS printers"
