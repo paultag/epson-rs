@@ -23,81 +23,45 @@
 //! This crate implements support for communicating with the Epson brand of
 //! thermal POS printer.
 
-/// Horizontal alignment.
-#[repr(u8)]
-pub enum Alignment {
-    /// Align to the leftmost edge.
-    Left = 0,
+mod commands;
+mod epson_image;
+mod models;
+mod write;
 
-    /// Align to the rightmost edge.
-    Right = 2,
+#[cfg(feature = "tokio")]
+mod async_tokio;
 
-    /// Center the text within the printable region.
-    Center = 1,
+pub use commands::{Alignment, Command};
+use epson_image::ImageBuffer;
+pub use models::Model;
+pub use write::Writer;
+
+#[cfg(feature = "tokio")]
+pub use async_tokio::AsyncWriter;
+
+/// Possible error states that we can get returned from the crate
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum Error {
+    /// This is returned when an image is not aligned to 8 in the width
+    /// direction. This is needed because an image's row of pixels is
+    /// packed into uint8s, each bit is a single pixel's true/false state.
+    ImageNot8BitAligned,
+
+    /// This error is returned when an Image is larger than the encoding
+    /// scheme can support (u16) or if the Image is wider than the model
+    /// supports.
+    ImageTooLarge,
+
+    /// This is returned if the requested function is not supported by the
+    /// configured Model.
+    Unsupported,
 }
 
-/// All commands that can be encoded to control an Epson printer.
-pub enum Command {
-    /// Initiaize the printer.
-    Init,
+impl std::error::Error for Error {}
 
-    /// If true, underline the printed text following. If false, remove
-    /// text decoration.
-    Underline(bool),
-
-    /// If true, emphasize the printed text following. If false, remove
-    /// text decoration.
-    Emphasize(bool),
-
-    /// If true, double strike the printed text following. If false, remove
-    /// text decoration.
-    DoubleStrike(bool),
-
-    /// If true, invert the color of the the printed text following. If false,
-    /// remove text decoration.
-    Reverse(bool),
-
-    /// Align the text to follow accoridng to the specified horizontal
-    /// text alignment.
-    Justification(Alignment),
-
-    /// Set the print speed.
-    Speed(u8),
-
-    /// Cut the thermal printer.
-    Cut,
-
-    /// Feed the specified number of lines.
-    Feed(u8),
-
-    /// Reverse-feed the specified number of lines.
-    ReverseFeed(u8),
-
-    /// Print a greyscale image
-    Image(image::GrayImage),
-}
-
-impl Command {
-    /// Return the command as raw bytes which can be sent to a POS printer.
-    pub fn as_bytes(&self) -> Vec<u8> {
-        match self {
-            Command::Init => vec![0x1b, 0x40],
-            _ => vec![],
-        }
-    }
-}
-
-// BarcodeHeight(u8),
-// Barcode(Vec<u8>),
-// Image(...)
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn init() {
-        assert_eq!(&[0x1b, 0x40], &Command::Init.as_bytes()[..]);
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "{:?}", self)
     }
 }
 

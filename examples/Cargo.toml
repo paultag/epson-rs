@@ -1,0 +1,10 @@
+[package]
+name = "epson-examples"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+epson = { path = "../", features = ["tokio"] }
+image = "0"
+qrcode = "0"
