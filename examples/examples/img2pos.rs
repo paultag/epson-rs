@@ -11,7 +11,6 @@ fn main() -> Result<()> {
     let mut pos = epson::Writer::open(Model::T20II, Box::new(stream))?;
 
     pos.speed(5)?;
-    pos.feed(5)?;
     pos.print_image(img.into())?;
     pos.feed(5)?;
     pos.cut()?;
