@@ -21,10 +21,10 @@
 use super::{Alignment, Command, Error as EpsonError, Model};
 use tokio::io::{AsyncWrite, AsyncWriteExt};
 
-/// Errors that can be returned from the async code in the Epson module.
+/// All possible errors that can be returned from the AsyncWriter struct.
 #[derive(Debug)]
 pub enum Error {
-    /// Raw Epson error
+    /// Raw Epson error, as defined in [EpsonError].
     Epson(EpsonError),
 
     /// Underlying Tokio i/o issue.
@@ -51,21 +51,21 @@ impl std::fmt::Display for Error {
     }
 }
 
-///
+/// Result alias for the AsyncWriter methods.
 type Result<T> = std::result::Result<T, Error>;
 
-///
+/// Write alias for the AsyncWrite W type.
 type Write = dyn AsyncWrite + Unpin + Send;
 
-/// AsyncWriter is a tokio compatable AsyncWrite traited writer that can
-/// write to an Epson printer using a tokio connection such as a TcpStream.
+/// Wrapper around a `tokio` [AsyncWrite] handle to write to an Epson printer
+/// using a tokio i/o connection such as a TcpStream.
 pub struct AsyncWriter {
     w: Box<Write>,
     model: Model,
 }
 
 impl AsyncWriter {
-    /// Create a new Writer
+    /// Create a new Writer, wrapping the provided `tokio::io::AsyncWrite`.
     pub async fn open(model: Model, w: Box<Write>) -> Result<Self> {
         let mut r = Self { w, model };
         r.init().await?;

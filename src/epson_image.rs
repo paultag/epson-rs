@@ -35,10 +35,10 @@ impl TryFrom<image::ImageBuffer<image::Luma<u8>, Vec<u8>>> for ImageBuffer {
     type Error = Error;
 
     fn try_from(img: image::ImageBuffer<image::Luma<u8>, Vec<u8>>) -> Result<Self, Error> {
-        let (width, height) = img.dimensions();
+        let (mut width, height) = img.dimensions();
 
         if width % 8 != 0 {
-            return Err(Error::ImageNot8BitAligned);
+            width += 8 - (width % 8);
         }
 
         let mut pixels = vec![];
@@ -49,7 +49,7 @@ impl TryFrom<image::ImageBuffer<image::Luma<u8>, Vec<u8>>> for ImageBuffer {
                 for bit in 0..8 {
                     let pixel = img.get_pixel(x + bit, y);
                     if pixel.0[0] <= 128 {
-                        block |= 1 << bit
+                        block |= 1 << (7 - bit)
                     }
                 }
                 pixels.push(block);

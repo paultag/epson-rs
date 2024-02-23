@@ -20,7 +20,7 @@
 
 use super::{Error, ImageBuffer};
 
-/// Horizontal alignment.
+/// Possible horizontal alignments.
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[repr(u8)]
 pub enum Alignment {

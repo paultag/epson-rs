@@ -21,10 +21,10 @@
 use super::{Alignment, Command, Error as EpsonError, Model};
 use std::io::Write;
 
-/// Errors that can be returned from the sync code in the Epson module.
+/// All errors that can be returned from the sync code in the Epson module.
 #[derive(Debug)]
 pub enum Error {
-    /// Raw Epson error
+    /// Raw Epson error.
     Epson(EpsonError),
 
     /// Underlying Tokio i/o issue.

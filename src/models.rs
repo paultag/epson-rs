@@ -20,7 +20,7 @@
 
 use super::Error;
 
-/// Model of Epson Printer
+/// Maintained and understood models of Epson Printers.
 #[non_exhaustive]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Model {

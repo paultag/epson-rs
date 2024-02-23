@@ -21,8 +21,62 @@
 #![deny(missing_docs)]
 #![feature(trait_alias)]
 
-//! This crate implements support for communicating with the Epson brand of
-//! thermal POS printer.
+//! The epson crate contains Rust bindings to the Epson Point of Sale (POS)
+//! thermal printers' printer format.
+//!
+//! Currently, this library supports a limited number of commands, and some
+//! basic interfaces for both synchronous Rust as well as async
+//! Rust through [tokio](https://tokio.rs/), behind the `tokio` feature.
+//!
+//! Docs can be found on [docs.rs](https://docs.rs/epson/latest/epson/),
+//! and information about the latest release can be found on
+//! [crates.io](https://crates.io/crates/epson).
+//!
+//! # Supported Models
+//!
+//! Specific makes/models of thermal printers will be added as I either
+//! get my hands on them, or someone maintains the model for the package.
+//! If your make/model isn't supported, you can use
+//! [models::Model::Generic].
+//!
+//! | Model | Type                     | Description                     |
+//! | ----- | ------------------------ | ------------------------------- |
+//! | T20II | [models::Model::T20II]   | Epson TM-T20II Thermal Printer  |
+//!
+//! # Writing to a `std::io::Write`
+//!
+//! We can write to a `std::io::Write` traited object (such as a `TcpStream`,
+//! but maybe something like a Serial device?), you can use a [Writer] to
+//! handle writing commands to the printer.
+//!
+//! ```rust
+//! // IP address of the printer
+//! let stream = TcpStream::connect("192.168.0.12:9100").unwrap();
+//! let mut pos = epson::Writer::open(Model::T20II, Box::new(stream)).unwrap();
+//!
+//! pos.speed(5).unwrap();
+//! pos.write_all(b"HACK THE PLANET\n").unwrap();
+//! pos.feed(5).unwrap();
+//! pos.cut().unwrap();
+//! ```
+//!
+//! # Writing to a `tokio::io::AsyncWrite`
+//!
+//! In addition to the `std::io` support, the `epson` crate also contains
+//! `tokio` support to write to a `tokio::io::AsyncWrite` using an
+//! [AsyncWriter].
+//!
+//! This requires the `tokio` feature.
+//!
+//! ```rust
+//! let stream = TcpStream::connect("192.168.0.12:9100").await.unwrap();
+//! let mut pos = epson::AsyncWriter::open(Model::T20II, Box::new(stream)).await.unwrap();
+//!
+//! pos.speed(5).await.unwrap();
+//! pos.write_all(b"HACK THE PLANET\n").await.unwrap();
+//! pos.feed(5).await.unwrap();
+//! pos.cut().await.unwrap();
+//! ```
 
 mod commands;
 mod epson_image;
@@ -38,7 +92,7 @@ pub use models::Model;
 pub use write::Writer;
 
 #[cfg(feature = "tokio")]
-pub use async_tokio::AsyncWriter;
+pub use async_tokio::{AsyncWriter, Error as AsyncWriterError};
 
 /// Possible error states that we can get returned from the crate
 #[derive(Copy, Clone, Debug, PartialEq)]
