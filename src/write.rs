@@ -70,7 +70,8 @@ impl Writer {
 
     /// initialize the epson printer
     fn init(&mut self) -> Result<()> {
-        self.write_command(Command::Init)
+        self.write_command(Command::Init)?;
+        self.write_command(Command::SetUtf8)
     }
 
     /// cut the printer paper

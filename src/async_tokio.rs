@@ -74,7 +74,8 @@ impl AsyncWriter {
 
     /// initialize the epson printer
     async fn init(&mut self) -> Result<()> {
-        self.write_command(Command::Init).await
+        self.write_command(Command::Init).await?;
+        self.write_command(Command::SetUtf8).await
     }
 
     /// cut the printer paper
