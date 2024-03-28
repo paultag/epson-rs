@@ -68,6 +68,9 @@ pub enum Command {
     /// Feed the specified number of lines.
     Feed(u8),
 
+    /// Switch the active encoding to be UTF-8.
+    SetUtf8,
+
     /// Print a greyscale image
     Image(image::ImageBuffer<image::Luma<u8>, Vec<u8>>),
 }
@@ -85,6 +88,7 @@ impl Command {
             Command::Justification(alignment) => vec![0x1b, b'a', *alignment as u8],
             Command::Feed(count) => vec![0x1b, b'd', *count],
             Command::Speed(speed) => vec![0x1d, 0x28, 0x4b, 0x02, 0x00, 0x32, speed % 9],
+            Command::SetUtf8 => vec![0x1C, 0x28, 0x43, 0x02, 0x00, 0x30, 0x2],
             Command::Image(img) => {
                 let buf: ImageBuffer = (img.clone()).try_into()?;
 
