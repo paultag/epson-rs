@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE. }}}
 
-use super::Error;
+use super::{CharacterSet, Error};
 
 /// Maintained and understood models of Epson Printers.
 #[non_exhaustive]
@@ -34,6 +34,9 @@ pub enum Model {
     /// printer. This is the printer I use to test with and likely the
     /// best supported one at the moment.
     T20II,
+
+    /// TM-T30II Epson brand thermal printer.
+    T30II,
 }
 
 impl Model {
@@ -49,6 +52,22 @@ impl Model {
             // the T20II has 12 pixels per column, 48 columns, so 576
             // pixels.
             Model::T20II => 576,
+
+            // the T30II has 12 pixels per column, 48 columns, so 576
+            // pixels.
+            Model::T30II => 576,
+        }
+    }
+
+    /// Return the level of support for a specific character set.
+    pub fn supports_character_set(&self, c: CharacterSet) -> bool {
+        match c {
+            CharacterSet::Raw => true,
+            CharacterSet::Unicode => match self {
+                Model::T20II => false,
+                Model::T30II => true,
+                Model::Generic => false,
+            },
         }
     }
 
@@ -59,6 +78,7 @@ impl Model {
         match self {
             Model::Generic => 48,
             Model::T20II => 48,
+            Model::T30II => 48,
         }
     }
 

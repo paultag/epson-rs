@@ -68,11 +68,22 @@ pub enum Command {
     /// Feed the specified number of lines.
     Feed(u8),
 
-    /// Switch the active encoding to be UTF-8.
-    SetUtf8,
+    /// Switch the active character set.
+    CharacterSet(CharacterSet),
 
     /// Print a greyscale image
     Image(image::ImageBuffer<image::Luma<u8>, Vec<u8>>),
+}
+
+/// CharacterSet are the codepages that can be set
+#[repr(u8)]
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum CharacterSet {
+    /// 1-byte chars, like ascii.
+    Raw = 0x01,
+
+    /// utf-8 support
+    Unicode = 0x02,
 }
 
 impl Command {
@@ -88,7 +99,7 @@ impl Command {
             Command::Justification(alignment) => vec![0x1b, b'a', *alignment as u8],
             Command::Feed(count) => vec![0x1b, b'd', *count],
             Command::Speed(speed) => vec![0x1d, 0x28, 0x4b, 0x02, 0x00, 0x32, speed % 9],
-            Command::SetUtf8 => vec![0x1C, 0x28, 0x43, 0x02, 0x00, 0x30, 0x2],
+            Command::CharacterSet(page) => vec![0x1C, 0x28, 0x43, 0x02, 0x00, 0x30, *page as u8],
             Command::Image(img) => {
                 let buf: ImageBuffer = (img.clone()).try_into()?;
 
@@ -180,6 +191,18 @@ mod tests {
     test_encoding_of!(speed_9, [0x1d, 0x28, 0x4b, 0x02, 0x00, 0x32, 0x00], || {
         Command::Speed(9)
     });
+
+    test_encoding_of!(
+        encode_char_page_raw,
+        [0x1C, 0x28, 0x43, 0x02, 0x00, 0x30, 0x01],
+        || { Command::CharacterSet(CharacterSet::Raw) }
+    );
+
+    test_encoding_of!(
+        encode_char_page_unicode,
+        [0x1C, 0x28, 0x43, 0x02, 0x00, 0x30, 0x02],
+        || { Command::CharacterSet(CharacterSet::Unicode) }
+    );
 
     // TODO: test image encoding here
 }

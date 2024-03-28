@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE. }}}
 
-use super::{Alignment, Command, Error as EpsonError, Model};
+use super::{Alignment, CharacterSet, Command, Error as EpsonError, Model};
 use tokio::io::{AsyncWrite, AsyncWriteExt};
 
 /// All possible errors that can be returned from the AsyncWriter struct.
@@ -74,13 +74,27 @@ impl AsyncWriter {
 
     /// initialize the epson printer
     async fn init(&mut self) -> Result<()> {
-        self.write_command(Command::Init).await?;
-        self.write_command(Command::SetUtf8).await
+        self.write_command(Command::Init).await
     }
 
     /// cut the printer paper
     pub async fn cut(&mut self) -> Result<()> {
         self.write_command(Command::Cut).await
+    }
+
+    /// Set unicode mode on the printer, if supported.
+    pub async fn set_unicode(&mut self) -> Result<()> {
+        self.character_set(CharacterSet::Unicode).await
+    }
+
+    /// Set the specific [CharacterSet] to be used on bytes sent to the
+    /// printer. Some models do not support sets other than `Raw`, so
+    /// check your specific printer model.
+    pub async fn character_set(&mut self, c: CharacterSet) -> Result<()> {
+        if !self.model.supports_character_set(c) {
+            return Err(EpsonError::Unsupported.into());
+        }
+        self.write_command(Command::CharacterSet(c)).await
     }
 
     /// If true, text printed after this command will be underlined. If false,

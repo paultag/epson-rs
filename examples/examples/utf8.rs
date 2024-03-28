@@ -5,14 +5,14 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
-
-    let img = image::io::Reader::open(args[2].clone())?.decode()?;
     let stream = TcpStream::connect(args[1].clone())?;
-    let mut pos = epson::Writer::open(Model::T20II, Box::new(stream))?;
+    let mut pos = epson::Writer::open(Model::T30II, Box::new(stream))?;
+
+    pos.set_unicode()?;
 
     pos.speed(5)?;
-    pos.print_image(img.resize(576, 1000000, image::imageops::Lanczos3).into())?;
-    pos.feed(5)?;
+    pos.write_all("hello there testing one two 53°".as_bytes())?;
+    pos.feed(10)?;
     pos.cut()?;
 
     Ok(())

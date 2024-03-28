@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE. }}}
 
-use super::{Alignment, Command, Error as EpsonError, Model};
+use super::{Alignment, CharacterSet, Command, Error as EpsonError, Model};
 use std::io::Write;
 
 /// All errors that can be returned from the sync code in the Epson module.
@@ -70,8 +70,23 @@ impl Writer {
 
     /// initialize the epson printer
     fn init(&mut self) -> Result<()> {
-        self.write_command(Command::Init)?;
-        self.write_command(Command::SetUtf8)
+        self.write_command(Command::Init)
+    }
+
+    /// Set unicode mode on the printer, if supported.
+    pub fn set_unicode(&mut self) -> Result<()> {
+        self.character_set(CharacterSet::Unicode)
+    }
+
+    /// Set the specific [CharacterSet] to be used on bytes sent to the
+    /// printer. Some models do not support sets other than `Raw`, so
+    /// check your specific printer model.
+    pub fn character_set(&mut self, c: CharacterSet) -> Result<()> {
+        if !self.model.supports_character_set(c) {
+            return Err(EpsonError::Unsupported.into());
+        }
+
+        self.write_command(Command::CharacterSet(c))
     }
 
     /// cut the printer paper
