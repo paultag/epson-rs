@@ -41,6 +41,7 @@
 //! | Model | Type                     | Description                     |
 //! | ----- | ------------------------ | ------------------------------- |
 //! | T20II | [models::Model::T20II]   | Epson TM-T20II Thermal Printer  |
+//! | T30II | [models::Model::T30II]   | Epson TM-T30II Thermal Printer  |
 //!
 //! # Writing to a `std::io::Write`
 //!
