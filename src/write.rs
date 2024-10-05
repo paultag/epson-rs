@@ -51,10 +51,11 @@ impl std::fmt::Display for Error {
     }
 }
 
-///
+/// Result-type used by this file.
 type Result<T> = std::result::Result<T, Error>;
 
-///
+/// Writer to be used in order to communicate with an Epson brand thermal
+/// printer.
 pub struct Writer {
     w: Box<dyn Write>,
     model: Model,
