@@ -23,8 +23,8 @@ jobs:
     strategy:
       matrix:
         flags: [
-          "--all-features",
-          "--no-default-features --features ''"
+          "--all-targets --all-features",
+          "--all-targets --no-default-features --features ''"
         ]
     steps:
       - uses: actions/checkout@v4
