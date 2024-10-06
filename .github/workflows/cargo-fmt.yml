@@ -4,17 +4,15 @@ on:
       - main
     paths:
       - "**.rs"
-      - "engine"
-      - "rust-toolchain"
-      - "rust-toolchain.toml"
+      - Cargo.toml
+      - Cargo.lock
       - .github/workflows/cargo-fmt.yml
   pull_request:
     paths:
       - "**.rs"
-      - "rust-toolchain"
-      - "rust-toolchain.toml"
+      - Cargo.toml
+      - Cargo.lock
       - .github/workflows/cargo-fmt.yml
-      - "engine"
 permissions:
   packages: read
   contents: read
