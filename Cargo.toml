@@ -1,7 +1,7 @@
 [package]
 name = "epson"
-version = "0.1.8"
-edition = "2021"
+version = "0.1.9"
+edition = "2024"
 license = "MIT"
 authors = ["Paul Tagliamonte <paultag@gmail.com>"]
 repository = "https://github.com/paultag/epson-rs"
