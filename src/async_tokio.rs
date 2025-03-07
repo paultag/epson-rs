@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE. }}}
 
+#![cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
+
 use super::{Alignment, CharacterSet, Command, Error as EpsonError, Model};
 use tokio::io::{AsyncWrite, AsyncWriteExt};
 

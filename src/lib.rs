@@ -19,6 +19,14 @@
 // THE SOFTWARE. }}}
 
 #![deny(missing_docs)]
+#![deny(missing_copy_implementations)]
+#![deny(trivial_casts)]
+#![deny(trivial_numeric_casts)]
+#![deny(unused_import_braces)]
+#![deny(unused_qualifications)]
+#![deny(rustdoc::broken_intra_doc_links)]
+#![deny(rustdoc::private_intra_doc_links)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 //! The epson crate contains Rust bindings to the Epson Point of Sale (POS)
 //! thermal printers' printer format.
