@@ -20,7 +20,7 @@
 
 #![cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
 
-use super::{Alignment, CharacterSet, Command, Error as EpsonError, Model};
+use super::{Alignment, CharacterSet, Command, Error as EpsonError, HriPosition, Model};
 use tokio::io::{AsyncWrite, AsyncWriteExt};
 
 /// All possible errors that can be returned from the AsyncWriter struct.
@@ -137,6 +137,11 @@ impl AsyncWriter {
     /// Set the printer speed to the provided value.
     pub async fn speed(&mut self, speed: u8) -> Result<()> {
         self.write_command(Command::Speed(speed)).await
+    }
+
+    /// Set the print position of HRI (Human Readable Interpretation) characters for barcodes.
+    pub async fn set_hri_position(&mut self, position: HriPosition) -> Result<()> {
+        self.write_command(Command::SetHriPosition(position)).await
     }
 
     /// Print a greyscale image.

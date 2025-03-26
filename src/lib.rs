@@ -94,7 +94,7 @@ mod write;
 #[cfg(feature = "tokio")]
 mod async_tokio;
 
-pub use commands::{Alignment, CharacterSet, Command};
+pub use commands::{Alignment, CharacterSet, Command, HriPosition};
 use epson_image::ImageBuffer;
 pub use models::Model;
 pub use write::Writer;

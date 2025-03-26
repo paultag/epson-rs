@@ -34,6 +34,23 @@ pub enum Alignment {
     Center = 1,
 }
 
+/// Position of HRI (Human Readable Interpretation) characters for barcodes.
+#[derive(Copy, Clone, Debug, PartialEq)]
+#[repr(u8)]
+pub enum HriPosition {
+    /// No HRI characters.
+    None = 0,
+
+    /// HRI characters above the barcode.
+    Above = 1,
+
+    /// HRI characters below the barcode.
+    Below = 2,
+
+    /// HRI characters both above and below the barcode.
+    Both = 3,
+}
+
 /// All commands that can be encoded to control an Epson printer.
 pub enum Command {
     /// Initiaize the printer.
@@ -71,6 +88,9 @@ pub enum Command {
     /// Switch the active character set.
     CharacterSet(CharacterSet),
 
+    /// Select the print position of HRI characters for barcodes.
+    SetHriPosition(HriPosition),
+
     /// Print a greyscale image
     Image(image::ImageBuffer<image::Luma<u8>, Vec<u8>>),
 }
@@ -100,6 +120,7 @@ impl Command {
             Command::Feed(count) => vec![0x1b, b'd', *count],
             Command::Speed(speed) => vec![0x1d, 0x28, 0x4b, 0x02, 0x00, 0x32, speed % 9],
             Command::CharacterSet(page) => vec![0x1C, 0x28, 0x43, 0x02, 0x00, 0x30, *page as u8],
+            Command::SetHriPosition(position) => vec![0x1d, b'H', *position as u8],
             Command::Image(img) => {
                 let buf: ImageBuffer = (img.clone()).try_into()?;
 
@@ -203,6 +224,20 @@ mod tests {
         [0x1C, 0x28, 0x43, 0x02, 0x00, 0x30, 0x02],
         || { Command::CharacterSet(CharacterSet::Unicode) }
     );
+
+    // HRI position tests
+    test_encoding_of!(encode_hri_position_none, [0x1d, 0x48, 0x00], || {
+        Command::SetHriPosition(HriPosition::None)
+    });
+    test_encoding_of!(encode_hri_position_above, [0x1d, 0x48, 0x01], || {
+        Command::SetHriPosition(HriPosition::Above)
+    });
+    test_encoding_of!(encode_hri_position_below, [0x1d, 0x48, 0x02], || {
+        Command::SetHriPosition(HriPosition::Below)
+    });
+    test_encoding_of!(encode_hri_position_both, [0x1d, 0x48, 0x03], || {
+        Command::SetHriPosition(HriPosition::Both)
+    });
 
     // TODO: test image encoding here
 }

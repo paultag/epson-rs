@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE. }}}
 
+use super::commands::HriPosition;
 use super::{Alignment, CharacterSet, Command, Error as EpsonError, Model};
 use std::io::Write;
 
@@ -133,6 +134,11 @@ impl Writer {
     /// Set the printer speed to the provided value.
     pub fn speed(&mut self, speed: u8) -> Result<()> {
         self.write_command(Command::Speed(speed))
+    }
+
+    /// Set the print position of HRI (Human Readable Interpretation) characters for barcodes.
+    pub fn set_hri_position(&mut self, position: HriPosition) -> Result<()> {
+        self.write_command(Command::SetHriPosition(position))
     }
 
     /// Print a greyscale image.
