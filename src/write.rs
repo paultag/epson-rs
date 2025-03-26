@@ -19,7 +19,7 @@
 // THE SOFTWARE. }}}
 
 use super::commands::HriPosition;
-use super::{Alignment, CharacterSet, Command, Error as EpsonError, Model};
+use super::{Alignment, Barcode, CharacterSet, Command, Error as EpsonError, Model};
 use std::io::Write;
 
 /// All errors that can be returned from the sync code in the Epson module.
@@ -157,6 +157,14 @@ impl Writer {
     /// it may result in trash being printed.
     pub fn print_image_unchecked(&mut self, img: image::GrayImage) -> Result<()> {
         self.write_command(Command::Image(img))
+    }
+
+    /// Print a barcode.
+    ///
+    /// The barcode will be printed according to the currently set HRI position.
+    /// Use `set_hri_position` to control the position of the human-readable text.
+    pub fn print_barcode(&mut self, barcode: Barcode) -> Result<()> {
+        self.write_command(Command::Barcode(barcode))
     }
 
     /// Send a raw command to the Epson printer.
