@@ -86,6 +86,7 @@
 //! pos.cut().await.unwrap();
 //! ```
 
+mod barcode;
 mod commands;
 mod epson_image;
 mod models;
@@ -94,6 +95,7 @@ mod write;
 #[cfg(feature = "tokio")]
 mod async_tokio;
 
+pub use barcode::Barcode;
 pub use commands::{Alignment, CharacterSet, Command, HriPosition};
 use epson_image::ImageBuffer;
 pub use models::Model;
@@ -118,6 +120,12 @@ pub enum Error {
     /// This is returned if the requested function is not supported by the
     /// configured Model.
     Unsupported,
+
+    /// This is returned when a barcode has an invalid number of digits.
+    InvalidBarcodeLength,
+
+    /// This is returned when a barcode contains invalid characters.
+    InvalidBarcodeCharacters,
 }
 
 impl std::error::Error for Error {}

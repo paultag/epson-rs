@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE. }}}
 
-use super::{Error, ImageBuffer};
+use super::{Barcode, Error, ImageBuffer};
 
 /// Possible horizontal alignments.
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -93,6 +93,9 @@ pub enum Command {
 
     /// Print a greyscale image
     Image(image::ImageBuffer<image::Luma<u8>, Vec<u8>>),
+
+    /// Print a barcode
+    Barcode(Barcode),
 }
 
 /// CharacterSet are the codepages that can be set
@@ -132,6 +135,14 @@ impl Command {
                     .chain(&buf.pixels)
                     .copied()
                     .collect()
+            }
+            Command::Barcode(barcode) => {
+                let data = barcode.data();
+                let barcode_type = barcode.barcode_type();
+
+                let mut result = vec![0x1d, 0x6b, barcode_type, data.len() as u8];
+                result.extend_from_slice(data);
+                result
             }
         })
     }
@@ -238,6 +249,22 @@ mod tests {
     test_encoding_of!(encode_hri_position_both, [0x1d, 0x48, 0x03], || {
         Command::SetHriPosition(HriPosition::Both)
     });
+
+    #[test]
+    fn test_barcode_upca() {
+        let barcode = Barcode::new_upca(b"12345678901").unwrap();
+        let cmd = Command::Barcode(barcode);
+        let bytes = cmd.as_bytes().unwrap();
+
+        // Check header: GS k M n
+        assert_eq!(bytes[0], 0x1d); // GS
+        assert_eq!(bytes[1], 0x6b); // k
+        assert_eq!(bytes[2], 65); // M (UPC-A)
+        assert_eq!(bytes[3], 11); // n (data length)
+
+        // Check data
+        assert_eq!(&bytes[4..], b"12345678901");
+    }
 
     // TODO: test image encoding here
 }

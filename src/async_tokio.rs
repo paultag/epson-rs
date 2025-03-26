@@ -20,7 +20,7 @@
 
 #![cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
 
-use super::{Alignment, CharacterSet, Command, Error as EpsonError, HriPosition, Model};
+use super::{Alignment, Barcode, CharacterSet, Command, Error as EpsonError, HriPosition, Model};
 use tokio::io::{AsyncWrite, AsyncWriteExt};
 
 /// All possible errors that can be returned from the AsyncWriter struct.
@@ -160,6 +160,14 @@ impl AsyncWriter {
     /// it may result in trash being printed.
     pub async fn print_image_unchecked(&mut self, img: image::GrayImage) -> Result<()> {
         self.write_command(Command::Image(img)).await
+    }
+
+    /// Print a barcode.
+    ///
+    /// The barcode will be printed according to the currently set HRI position.
+    /// Use `set_hri_position` to control the position of the human-readable text.
+    pub async fn print_barcode(&mut self, barcode: Barcode) -> Result<()> {
+        self.write_command(Command::Barcode(barcode)).await
     }
 
     /// Send a raw command to the Epson printer.
