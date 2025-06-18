@@ -99,10 +99,28 @@ pub use barcode::Barcode;
 pub use commands::{Alignment, CharacterSet, Command, HriPosition};
 use epson_image::ImageBuffer;
 pub use models::Model;
-pub use write::Writer;
+pub use write::StdWriterExt;
 
 #[cfg(feature = "tokio")]
-pub use async_tokio::{AsyncWriter, Error as AsyncWriterError};
+pub use async_tokio::AsyncWriterExt;
+
+/// Writer to be used in order to communicate with an Epson brand thermal
+/// printer.
+pub struct Writer<WriteT> {
+    w: WriteT,
+    model: Model,
+}
+
+impl<WriteT> Writer<WriteT> {
+    /// Pull the Writer out of the Epson handle. This consumes the handle
+    /// to the printer.
+    pub fn into_inner(self) -> WriteT {
+        self.w
+    }
+}
+
+#[cfg(feature = "tokio")]
+pub use async_tokio::Error as AsyncWriterError;
 
 /// Possible error states that we can get returned from the crate
 #[derive(Copy, Clone, Debug, PartialEq)]

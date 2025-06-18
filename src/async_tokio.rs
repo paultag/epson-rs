@@ -20,7 +20,9 @@
 
 #![cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
 
-use super::{Alignment, Barcode, CharacterSet, Command, Error as EpsonError, HriPosition, Model};
+use super::{
+    Alignment, Barcode, CharacterSet, Command, Error as EpsonError, HriPosition, Model, Writer,
+};
 use tokio::io::{AsyncWrite, AsyncWriteExt};
 
 /// All possible errors that can be returned from the AsyncWriter struct.
@@ -56,93 +58,59 @@ impl std::fmt::Display for Error {
 /// Result alias for the AsyncWriter methods.
 type Result<T> = std::result::Result<T, Error>;
 
-/// Write alias for the AsyncWrite W type.
-type Write = dyn AsyncWrite + Unpin + Send;
+/// Trait to add async epson methods.
+pub trait AsyncWriterExt
+where
+    Self: Sized,
+{
+    /// Inner type of the Async writer
+    type Write: AsyncWrite;
 
-/// Wrapper around a `tokio` [AsyncWrite] handle to write to an Epson printer
-/// using a tokio i/o connection such as a TcpStream.
-pub struct AsyncWriter {
-    w: Box<Write>,
-    model: Model,
-}
-
-impl AsyncWriter {
     /// Create a new Writer, wrapping the provided `tokio::io::AsyncWrite`.
-    pub async fn open(model: Model, w: Box<Write>) -> Result<Self> {
-        let mut r = Self { w, model };
-        r.init().await?;
-        Ok(r)
-    }
+    fn open(model: Model, w: Self::Write) -> impl Future<Output = Result<Self>>;
 
     /// initialize the epson printer
-    async fn init(&mut self) -> Result<()> {
-        self.write_command(Command::Init).await
-    }
+    fn init(&mut self) -> impl Future<Output = Result<()>>;
 
     /// cut the printer paper
-    pub async fn cut(&mut self) -> Result<()> {
-        self.write_command(Command::Cut).await
-    }
+    fn cut(&mut self) -> impl Future<Output = Result<()>>;
 
     /// Set unicode mode on the printer, if supported.
-    pub async fn set_unicode(&mut self) -> Result<()> {
-        self.character_set(CharacterSet::Unicode).await
-    }
+    fn set_unicode(&mut self) -> impl Future<Output = Result<()>>;
 
     /// Set the specific [CharacterSet] to be used on bytes sent to the
     /// printer. Some models do not support sets other than `Raw`, so
     /// check your specific printer model.
-    pub async fn character_set(&mut self, c: CharacterSet) -> Result<()> {
-        if !self.model.supports_character_set(c) {
-            return Err(EpsonError::Unsupported.into());
-        }
-        self.write_command(Command::CharacterSet(c)).await
-    }
+    fn character_set(&mut self, c: CharacterSet) -> impl Future<Output = Result<()>>;
 
     /// If true, text printed after this command will be underlined. If false,
     /// it will remove an underline if one was set.
-    pub async fn underline(&mut self, state: bool) -> Result<()> {
-        self.write_command(Command::Underline(state)).await
-    }
+    fn underline(&mut self, state: bool) -> impl Future<Output = Result<()>>;
 
     /// If true, emphasize the text printed after this command. if false,
     /// remove emphasis on the text.
-    pub async fn emphasize(&mut self, state: bool) -> Result<()> {
-        self.write_command(Command::Emphasize(state)).await
-    }
+    fn emphasize(&mut self, state: bool) -> impl Future<Output = Result<()>>;
 
     /// If true, reverse the color of the text printed after this command.
     /// if false, return the colors to normal.
-    pub async fn reverse(&mut self, state: bool) -> Result<()> {
-        self.write_command(Command::Reverse(state)).await
-    }
+    fn reverse(&mut self, state: bool) -> impl Future<Output = Result<()>>;
 
     /// If true, double-strike the text printed after this command.
     /// If false, remove the double-strike.
-    pub async fn double_strike(&mut self, state: bool) -> Result<()> {
-        self.write_command(Command::DoubleStrike(state)).await
-    }
+    fn double_strike(&mut self, state: bool) -> impl Future<Output = Result<()>>;
 
     /// Set the horizontal justification of the text printed after this
     /// command.
-    pub async fn justify(&mut self, alignment: Alignment) -> Result<()> {
-        self.write_command(Command::Justification(alignment)).await
-    }
+    fn justify(&mut self, alignment: Alignment) -> impl Future<Output = Result<()>>;
 
     /// Feed the specified number of lines out of the printer.
-    pub async fn feed(&mut self, count: u8) -> Result<()> {
-        self.write_command(Command::Feed(count)).await
-    }
+    fn feed(&mut self, count: u8) -> impl Future<Output = Result<()>>;
 
     /// Set the printer speed to the provided value.
-    pub async fn speed(&mut self, speed: u8) -> Result<()> {
-        self.write_command(Command::Speed(speed)).await
-    }
+    fn speed(&mut self, speed: u8) -> impl Future<Output = Result<()>>;
 
     /// Set the print position of HRI (Human Readable Interpretation) characters for barcodes.
-    pub async fn set_hri_position(&mut self, position: HriPosition) -> Result<()> {
-        self.write_command(Command::SetHriPosition(position)).await
-    }
+    fn set_hri_position(&mut self, position: HriPosition) -> impl Future<Output = Result<()>>;
 
     /// Print a greyscale image.
     ///
@@ -150,34 +118,110 @@ impl AsyncWriter {
     /// and the size may not be larger than a uint16 in height. The
     /// width of the image is constrained by the underling printer model
     /// provided to `Self::open`.
-    pub async fn print_image(&mut self, img: image::GrayImage) -> Result<()> {
-        self.model.check_image(&img)?;
-        self.print_image_unchecked(img).await
-    }
+    fn print_image(&mut self, img: image::GrayImage) -> impl Future<Output = Result<()>>;
 
     /// Print a grayscale image, without any model checks. This will let you
     /// do all sorts of invalid things. Don't use this if you can avoid it,
     /// it may result in trash being printed.
-    pub async fn print_image_unchecked(&mut self, img: image::GrayImage) -> Result<()> {
-        self.write_command(Command::Image(img)).await
-    }
+    fn print_image_unchecked(&mut self, img: image::GrayImage) -> impl Future<Output = Result<()>>;
 
     /// Print a barcode.
     ///
     /// The barcode will be printed according to the currently set HRI position.
     /// Use `set_hri_position` to control the position of the human-readable text.
-    pub async fn print_barcode(&mut self, barcode: Barcode) -> Result<()> {
+    fn print_barcode(&mut self, barcode: Barcode) -> impl Future<Output = Result<()>>;
+
+    /// Send a raw command to the Epson printer.
+    fn write_command(&mut self, cmd: Command) -> impl Future<Output = Result<()>>;
+
+    /// Write the full buffer `buf` to the underlying socket.
+    fn write_all(&mut self, buf: &[u8]) -> impl Future<Output = Result<()>>;
+}
+
+impl<WriteT> AsyncWriterExt for Writer<WriteT>
+where
+    WriteT: Unpin,
+    WriteT: Send,
+    WriteT: AsyncWrite,
+{
+    type Write = WriteT;
+
+    async fn open(model: Model, w: WriteT) -> Result<Self> {
+        let mut r = Self { w, model };
+        r.init().await?;
+        Ok(r)
+    }
+
+    async fn init(&mut self) -> Result<()> {
+        self.write_command(Command::Init).await
+    }
+
+    async fn cut(&mut self) -> Result<()> {
+        self.write_command(Command::Cut).await
+    }
+
+    async fn set_unicode(&mut self) -> Result<()> {
+        self.character_set(CharacterSet::Unicode).await
+    }
+
+    async fn character_set(&mut self, c: CharacterSet) -> Result<()> {
+        if !self.model.supports_character_set(c) {
+            return Err(EpsonError::Unsupported.into());
+        }
+        self.write_command(Command::CharacterSet(c)).await
+    }
+
+    async fn underline(&mut self, state: bool) -> Result<()> {
+        self.write_command(Command::Underline(state)).await
+    }
+
+    async fn emphasize(&mut self, state: bool) -> Result<()> {
+        self.write_command(Command::Emphasize(state)).await
+    }
+
+    async fn reverse(&mut self, state: bool) -> Result<()> {
+        self.write_command(Command::Reverse(state)).await
+    }
+
+    async fn double_strike(&mut self, state: bool) -> Result<()> {
+        self.write_command(Command::DoubleStrike(state)).await
+    }
+
+    async fn justify(&mut self, alignment: Alignment) -> Result<()> {
+        self.write_command(Command::Justification(alignment)).await
+    }
+
+    async fn feed(&mut self, count: u8) -> Result<()> {
+        self.write_command(Command::Feed(count)).await
+    }
+
+    async fn speed(&mut self, speed: u8) -> Result<()> {
+        self.write_command(Command::Speed(speed)).await
+    }
+
+    async fn set_hri_position(&mut self, position: HriPosition) -> Result<()> {
+        self.write_command(Command::SetHriPosition(position)).await
+    }
+
+    async fn print_image(&mut self, img: image::GrayImage) -> Result<()> {
+        self.model.check_image(&img)?;
+        self.print_image_unchecked(img).await
+    }
+
+    async fn print_image_unchecked(&mut self, img: image::GrayImage) -> Result<()> {
+        self.write_command(Command::Image(img)).await
+    }
+
+    async fn print_barcode(&mut self, barcode: Barcode) -> Result<()> {
         self.write_command(Command::Barcode(barcode)).await
     }
 
-    /// Send a raw command to the Epson printer.
-    pub async fn write_command(&mut self, cmd: Command) -> Result<()> {
+    async fn write_command(&mut self, cmd: Command) -> Result<()> {
         self.w.write_all(&cmd.as_bytes()?).await?;
         Ok(())
     }
 
-    /// Write the full buffer `buf` to the underlying socket.
-    pub async fn write_all(&mut self, buf: &[u8]) -> Result<()> {
+    async fn write_all(&mut self, buf: &[u8]) -> Result<()> {
         self.w.write_all(buf).await?;
         Ok(())
     }

@@ -18,8 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE. }}}
 
-use super::commands::HriPosition;
-use super::{Alignment, Barcode, CharacterSet, Command, Error as EpsonError, Model};
+use super::{
+    Alignment, Barcode, CharacterSet, Command, Error as EpsonError, Model, Writer,
+    commands::HriPosition,
+};
 use std::io::Write;
 
 /// All errors that can be returned from the sync code in the Epson module.
@@ -55,16 +57,91 @@ impl std::fmt::Display for Error {
 /// Result-type used by this file.
 type Result<T> = std::result::Result<T, Error>;
 
-/// Writer to be used in order to communicate with an Epson brand thermal
-/// printer.
-pub struct Writer {
-    w: Box<dyn Write>,
-    model: Model,
+/// Trait to add std sync epson methods.
+pub trait StdWriterExt
+where
+    Self: Sized,
+{
+    /// Inner type of the  writer
+    type Write: Write;
+
+    /// Create a new Writer
+    fn open(model: Model, w: Self::Write) -> Result<Self>;
+
+    /// initialize the epson printer
+    fn init(&mut self) -> Result<()>;
+
+    /// Set unicode mode on the printer, if supported.
+    fn set_unicode(&mut self) -> Result<()>;
+
+    /// Set the specific [CharacterSet] to be used on bytes sent to the
+    /// printer. Some models do not support sets other than `Raw`, so
+    /// check your specific printer model.
+    fn character_set(&mut self, c: CharacterSet) -> Result<()>;
+
+    /// cut the printer paper
+    fn cut(&mut self) -> Result<()>;
+
+    /// If true, text printed after this command will be underlined. If false,
+    /// it will remove an underline if one was set.
+    fn underline(&mut self, state: bool) -> Result<()>;
+
+    /// If true, emphasize the text printed after this command. if false,
+    /// remove emphasis on the text.
+    fn emphasize(&mut self, state: bool) -> Result<()>;
+
+    /// If true, reverse the color of the text printed after this command.
+    /// if false, return the colors to normal.
+    fn reverse(&mut self, state: bool) -> Result<()>;
+
+    /// If true, double-strike the text printed after this command.
+    /// If false, remove the double-strike.
+    fn double_strike(&mut self, state: bool) -> Result<()>;
+
+    /// Set the horizontal justification of the text printed after this
+    /// command.
+    fn justify(&mut self, alignment: Alignment) -> Result<()>;
+
+    /// Feed the specified number of lines out of the printer.
+    fn feed(&mut self, count: u8) -> Result<()>;
+
+    /// Set the printer speed to the provided value.
+    fn speed(&mut self, speed: u8) -> Result<()>;
+
+    /// Set the print position of HRI (Human Readable Interpretation) characters for barcodes.
+    fn set_hri_position(&mut self, position: HriPosition) -> Result<()>;
+
+    /// Print a greyscale image.
+    ///
+    /// Currently, this image must have a width that's 8 bit aligned,
+    /// and the size may not be larger than a uint16 in height. The
+    /// width of the image is constrained by the underling printer model
+    /// provided to `Self::open`.
+    fn print_image(&mut self, img: image::GrayImage) -> Result<()>;
+
+    /// Print a grayscale image, without any model checks. This will let you
+    /// do all sorts of invalid things. Don't use this if you can avoid it,
+    /// it may result in trash being printed.
+    fn print_image_unchecked(&mut self, img: image::GrayImage) -> Result<()>;
+
+    /// Print a barcode.
+    ///
+    /// The barcode will be printed according to the currently set HRI position.
+    /// Use `set_hri_position` to control the position of the human-readable text.
+    fn print_barcode(&mut self, barcode: Barcode) -> Result<()>;
+
+    /// Send a raw command to the Epson printer.
+    fn write_command(&mut self, cmd: Command) -> Result<()>;
 }
 
-impl Writer {
+impl<WriteT> StdWriterExt for Writer<WriteT>
+where
+    WriteT: Write,
+{
+    type Write = WriteT;
+
     /// Create a new Writer
-    pub fn open(model: Model, w: Box<dyn Write>) -> Result<Self> {
+    fn open(model: Model, w: WriteT) -> Result<Self> {
         let mut r = Self { w, model };
         r.init()?;
         Ok(r)
@@ -76,14 +153,14 @@ impl Writer {
     }
 
     /// Set unicode mode on the printer, if supported.
-    pub fn set_unicode(&mut self) -> Result<()> {
+    fn set_unicode(&mut self) -> Result<()> {
         self.character_set(CharacterSet::Unicode)
     }
 
     /// Set the specific [CharacterSet] to be used on bytes sent to the
     /// printer. Some models do not support sets other than `Raw`, so
     /// check your specific printer model.
-    pub fn character_set(&mut self, c: CharacterSet) -> Result<()> {
+    fn character_set(&mut self, c: CharacterSet) -> Result<()> {
         if !self.model.supports_character_set(c) {
             return Err(EpsonError::Unsupported.into());
         }
@@ -92,52 +169,52 @@ impl Writer {
     }
 
     /// cut the printer paper
-    pub fn cut(&mut self) -> Result<()> {
+    fn cut(&mut self) -> Result<()> {
         self.write_command(Command::Cut)
     }
 
     /// If true, text printed after this command will be underlined. If false,
     /// it will remove an underline if one was set.
-    pub fn underline(&mut self, state: bool) -> Result<()> {
+    fn underline(&mut self, state: bool) -> Result<()> {
         self.write_command(Command::Underline(state))
     }
 
     /// If true, emphasize the text printed after this command. if false,
     /// remove emphasis on the text.
-    pub fn emphasize(&mut self, state: bool) -> Result<()> {
+    fn emphasize(&mut self, state: bool) -> Result<()> {
         self.write_command(Command::Emphasize(state))
     }
 
     /// If true, reverse the color of the text printed after this command.
     /// if false, return the colors to normal.
-    pub fn reverse(&mut self, state: bool) -> Result<()> {
+    fn reverse(&mut self, state: bool) -> Result<()> {
         self.write_command(Command::Reverse(state))
     }
 
     /// If true, double-strike the text printed after this command.
     /// If false, remove the double-strike.
-    pub fn double_strike(&mut self, state: bool) -> Result<()> {
+    fn double_strike(&mut self, state: bool) -> Result<()> {
         self.write_command(Command::DoubleStrike(state))
     }
 
     /// Set the horizontal justification of the text printed after this
     /// command.
-    pub fn justify(&mut self, alignment: Alignment) -> Result<()> {
+    fn justify(&mut self, alignment: Alignment) -> Result<()> {
         self.write_command(Command::Justification(alignment))
     }
 
     /// Feed the specified number of lines out of the printer.
-    pub fn feed(&mut self, count: u8) -> Result<()> {
+    fn feed(&mut self, count: u8) -> Result<()> {
         self.write_command(Command::Feed(count))
     }
 
     /// Set the printer speed to the provided value.
-    pub fn speed(&mut self, speed: u8) -> Result<()> {
+    fn speed(&mut self, speed: u8) -> Result<()> {
         self.write_command(Command::Speed(speed))
     }
 
     /// Set the print position of HRI (Human Readable Interpretation) characters for barcodes.
-    pub fn set_hri_position(&mut self, position: HriPosition) -> Result<()> {
+    fn set_hri_position(&mut self, position: HriPosition) -> Result<()> {
         self.write_command(Command::SetHriPosition(position))
     }
 
@@ -147,7 +224,7 @@ impl Writer {
     /// and the size may not be larger than a uint16 in height. The
     /// width of the image is constrained by the underling printer model
     /// provided to `Self::open`.
-    pub fn print_image(&mut self, img: image::GrayImage) -> Result<()> {
+    fn print_image(&mut self, img: image::GrayImage) -> Result<()> {
         self.model.check_image(&img)?;
         self.print_image_unchecked(img)
     }
@@ -155,7 +232,7 @@ impl Writer {
     /// Print a grayscale image, without any model checks. This will let you
     /// do all sorts of invalid things. Don't use this if you can avoid it,
     /// it may result in trash being printed.
-    pub fn print_image_unchecked(&mut self, img: image::GrayImage) -> Result<()> {
+    fn print_image_unchecked(&mut self, img: image::GrayImage) -> Result<()> {
         self.write_command(Command::Image(img))
     }
 
@@ -163,7 +240,7 @@ impl Writer {
     ///
     /// The barcode will be printed according to the currently set HRI position.
     /// Use `set_hri_position` to control the position of the human-readable text.
-    pub fn print_barcode(&mut self, barcode: Barcode) -> Result<()> {
+    fn print_barcode(&mut self, barcode: Barcode) -> Result<()> {
         self.write_command(Command::Barcode(barcode))
     }
 
@@ -174,7 +251,10 @@ impl Writer {
     }
 }
 
-impl Write for Writer {
+impl<WriteT> Write for Writer<WriteT>
+where
+    WriteT: Write,
+{
     fn write(&mut self, b: &[u8]) -> std::io::Result<usize> {
         self.w.write(b)
     }
