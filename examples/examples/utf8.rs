@@ -1,12 +1,12 @@
-use epson::Model;
+use epson::{Model, StdWriterExt};
 use std::{io::Write, net::TcpStream};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
-    let stream = TcpStream::connect(args[1].clone())?;
-    let mut pos = epson::Writer::open(Model::T30II, Box::new(stream))?;
+    let mut stream = TcpStream::connect(args[1].clone())?;
+    let mut pos = epson::Writer::open(Model::T30II, &mut stream)?;
 
     pos.set_unicode()?;
 

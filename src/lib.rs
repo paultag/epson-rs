@@ -78,7 +78,7 @@
 //!
 //! ```rust
 //! let stream = TcpStream::connect("192.168.0.12:9100").await.unwrap();
-//! let mut pos = epson::AsyncWriter::open(Model::T20II, Box::new(stream)).await.unwrap();
+//! let mut pos = epson::Writer::open(Model::T20II, Box::new(stream)).await.unwrap();
 //!
 //! pos.speed(5).await.unwrap();
 //! pos.write_all(b"HACK THE PLANET\n").await.unwrap();

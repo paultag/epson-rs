@@ -1,12 +1,12 @@
-use epson::{Alignment, Model};
+use epson::{Alignment, AsyncWriterExt, Model};
 use std::error::Error;
 use tokio::net::TcpStream;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
-    let stream = TcpStream::connect(args[1].clone()).await?;
-    let mut pos = epson::AsyncWriter::open(Model::T20II, Box::new(stream)).await?;
+    let mut stream = TcpStream::connect(args[1].clone()).await?;
+    let mut pos = epson::Writer::open(Model::T20II, &mut stream).await?;
 
     pos.speed(5).await?;
 
