@@ -47,10 +47,10 @@ impl TryFrom<image::ImageBuffer<image::Luma<u8>, Vec<u8>>> for ImageBuffer {
             for x in (0..width).step_by(8) {
                 let mut block: u8 = 0;
                 for bit in 0..8 {
-                    if let Some(pixel) = img.get_pixel_checked(x + bit, y) {
-                        if pixel.0[0] <= 128 {
-                            block |= 1 << (7 - bit)
-                        }
+                    if let Some(pixel) = img.get_pixel_checked(x + bit, y)
+                        && pixel.0[0] <= 128
+                    {
+                        block |= 1 << (7 - bit)
                     }
                 }
                 pixels.push(block);
